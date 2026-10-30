@@ -24,7 +24,7 @@
 <!-- Afonso's apps at a fixed github.io address - built by Claude 30 Oct 2026.
      Finds today's link (a TXT record kept by the PC's "Link diario" task) and shows it inside this page,
      so the address bar stays here. The round button goes back to the start (Home, or the app's first page).
-     ?app=<name> shows one app; Home opens each app in a new tab like that. -->
+     #<code> shows one app; Home opens each app in a new tab like that. -->
 <div id="msg"><p>A abrir&hellip;</p></div>
 <iframe id="app" title="Casa" allow="fullscreen; clipboard-read; clipboard-write; autoplay; microphone; camera; display-capture; gamepad; screen-wake-lock; keyboard-map" allowfullscreen referrerpolicy="no-referrer"></iframe>
 <button id="home" title="Home" aria-label="Home"><svg viewBox="0 0 32 32"><path d="M8 17l8-7 8 7v7h-5v-5h-6v5H8z" fill="#e8a33d"/></svg></button>
@@ -56,24 +56,24 @@
     msg.innerHTML = '<p>Não consegui encontrar o link de hoje. O PC pode estar desligado ou sem internet.</p><button id="again">Tentar outra vez</button>';
     document.getElementById('again').onclick = start;
   }
-  // ?app=<name> opens one app in this tab (Home opens each app in a new tab like this - 30 Oct 2026)
+  // #<code> opens one app in this tab (Home opens each app in a new tab like this). The codes mean nothing on
+  // purpose, so the address never names the app; every tab is just titled "Casa" (his wish, 30 Oct 2026).
   const APPS = {
-    obsidian: ['Obsidian', (w) => 'https://' + w + '.' + BASE + '/obsidian/'],
-    whatsapp: ['WhatsApp', (w) => 'https://' + w + '.' + BASE + '/whatsapp/'],
-    instagram: ['Instagram', (w) => 'https://' + w + '.' + BASE + '/instagram/'],
-    claude: ['Claude', (w) => 'https://' + w + '.' + BASE + '/claude/'],
-    pc: ['PC', (w) => 'https://' + w + '.' + BASE + '/pc/pc.html?hostId=1430177075&appId=2079185603'],
-    stremio: ['Stremio', (w) => 'https://st-' + w + '.' + BASE + '/'],
-    betclic: ['Betclic', (w) => 'https://bc-' + w + '.' + BASE + '/'],
+    q4: (w) => 'https://' + w + '.' + BASE + '/obsidian/',
+    m8: (w) => 'https://' + w + '.' + BASE + '/whatsapp/',
+    r2: (w) => 'https://' + w + '.' + BASE + '/instagram/',
+    v5: (w) => 'https://' + w + '.' + BASE + '/claude/',
+    x9: (w) => 'https://' + w + '.' + BASE + '/pc/pc.html?hostId=1430177075&appId=2079185603',
+    t3: (w) => 'https://st-' + w + '.' + BASE + '/',
+    k7: (w) => 'https://bc-' + w + '.' + BASE + '/',
   };
-  const app = APPS[new URLSearchParams(location.search).get('app') || ''];
-  if (app) { document.title = app[0]; homeBtn.title = 'Voltar ao in\u00edcio de ' + app[0]; }
+  const app = APPS[location.hash.slice(1)];
   async function start() {
     msg.style.display = 'flex'; msg.innerHTML = '<p>A abrir&hellip;</p>';
     const w = (await todaysWord()) || get('casa-word');
     if (!w) return fail();
     put('casa-word', w);
-    root = app ? app[1](w) : 'https://' + w + '.' + BASE + '/';
+    root = app ? app(w) : 'https://' + w + '.' + BASE + '/';
     frame.src = root;
   }
   frame.addEventListener('load', () => {
