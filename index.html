@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Casa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e8a33d'/><path d='M8 17l8-7 8 7v7h-5v-5h-6v5H8z' fill='%23141210'/></svg>">
+<style>
+  :root { --bg: #121110; --text: #ece7df; --dim: #8f877b; --accent: #e8a33d; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font: 15px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: none; background: var(--bg); }
+  #msg { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+  #msg p { color: var(--dim); max-width: 340px; }
+  #msg a, #msg button { color: #141210; background: var(--accent); border: 0; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+  #home { position: fixed; left: 10px; bottom: 10px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #2c2a27;
+          background: rgba(27,26,24,.75); display: none; place-items: center; cursor: pointer; z-index: 2; opacity: .55; transition: opacity .15s; }
+  #home:hover, #home:focus-visible { opacity: 1; outline: none; }
+  #home svg { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+<!-- Afonso's apps at a fixed github.io address - built by Claude 30 Oct 2026.
+     Finds today's link (a TXT record kept by the PC's "Link diario" task) and shows it inside this page,
+     so the address bar stays here. The round button brings Home back. -->
+<div id="msg"><p>A abrir&hellip;</p></div>
+<iframe id="app" title="Casa" allow="fullscreen; clipboard-read; clipboard-write; autoplay; microphone; camera; display-capture; gamepad; screen-wake-lock; keyboard-map" allowfullscreen referrerpolicy="no-referrer"></iframe>
+<button id="home" title="Home" aria-label="Home"><svg viewBox="0 0 32 32"><path d="M8 17l8-7 8 7v7h-5v-5h-6v5H8z" fill="#e8a33d"/></svg></button>
+<script>
+  const BASE = 'brainafsdomi.com';
+  const NAME = '_casa.' + BASE;
+  const frame = document.getElementById('app');
+  const msg = document.getElementById('msg');
+  const homeBtn = document.getElementById('home');
+  let root = '';
+
+  const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const put = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  async function ask(url) {
+    const r = await fetch(url, { headers: { accept: 'application/dns-json' }, cache: 'no-store' });
+    const j = await r.json();
+    const a = (j.Answer || []).find((x) => x.type === 16);
+    const w = a ? String(a.data).replace(/"/g, '').trim() : '';
+    return /^[a-z]{3,12}$/.test(w) ? w : '';
+  }
+  async function todaysWord() {
+    for (const u of ['https://cloudflare-dns.com/dns-query?type=TXT&name=', 'https://dns.google/resolve?type=TXT&name=']) {
+      try { const w = await ask(u + NAME); if (w) return w; } catch (e) {}
+    }
+    return '';
+  }
+  function fail() {
+    msg.innerHTML = '<p>Não consegui encontrar o link de hoje. O PC pode estar desligado ou sem internet.</p><button id="again">Tentar outra vez</button>';
+    document.getElementById('again').onclick = start;
+  }
+  async function start() {
+    msg.style.display = 'flex'; msg.innerHTML = '<p>A abrir&hellip;</p>';
+    const w = (await todaysWord()) || get('casa-word');
+    if (!w) return fail();
+    put('casa-word', w);
+    root = 'https://' + w + '.' + BASE + '/';
+    frame.src = root;
+  }
+  frame.addEventListener('load', () => {
+    if (!frame.src) return;
+    msg.style.display = 'none';
+    frame.style.display = 'block';
+    homeBtn.style.display = 'grid';
+  });
+  homeBtn.addEventListener('click', () => { if (root) frame.src = root; });
+  start();
+</script>
+</body>
+</html>
